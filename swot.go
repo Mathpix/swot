@@ -4,15 +4,13 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/url"
-	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	valid "github.com/asaskevich/govalidator"
 )
 
-//IsAcademic returns true if the email address/URL belongs to an academic institution.
+// IsAcademic returns true if the email address/URL belongs to an academic institution.
 func IsAcademic(emailOrURL string) bool {
 	domainName, err := getDomainName(emailOrURL)
 	if err != nil {
@@ -66,8 +64,8 @@ func isBlacklisted(domainName string) bool {
 	return false
 }
 
-//isAcademicTLD returns true if the domainName is a top level academic domain
-//or false otherwise.
+// isAcademicTLD returns true if the domainName is a top level academic domain
+// or false otherwise.
 func isAcademicTLD(domainName string) bool {
 	for _, tld := range academicTLDs {
 		if strings.HasSuffix(domainName, tld) {
@@ -77,16 +75,8 @@ func isAcademicTLD(domainName string) bool {
 	return false
 }
 
-//fileExits returns true if the file exists or false otherwise.
-func fileExits(path string) bool {
-	if _, err := os.Stat(path); err == nil {
-		return true
-	}
-	return false
-}
-
-//GetSchoolName returns the name of the academic institution
-//or an empty string if the name of the institution is not found.
+// GetSchoolName returns the name of the academic institution
+// or an empty string if the name of the institution is not found.
 func GetSchoolName(emailOrURL string) string {
 	domainName, err := getDomainName(emailOrURL)
 	if err != nil {
@@ -101,19 +91,29 @@ func GetSchoolName(emailOrURL string) string {
 	return strings.TrimSpace(s)
 }
 
+// fileExits returns true if the file exists or false otherwise.
+func fileExits(path string) bool {
+	if _, err := br.Stat(path); err == nil {
+		return true
+	}
+	return false
+}
+
 func getInstitutionName(domainName string) (string, error) {
+
 	domainParts := splitDomainName(domainName)
 
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		return "", errors.New("Path to 'domains' directory not found")
-	}
+	path := "domains"
 
-	path := filepath.Join(filepath.Dir(filename), "domains", domainParts[len(domainParts)-1])
-	for i := len(domainParts) - 2; i >= 0; i-- {
+	for i := len(domainParts) - 1; i >= 0; i-- {
 		path = filepath.Join(path, domainParts[i])
 		if fileExits(path + ".txt") {
-			b, err := ioutil.ReadFile(path + ".txt")
+			f, err := br.Open(path + ".txt")
+			if err != nil {
+				return "", err
+			}
+
+			b, err := ioutil.ReadAll(f)
 			if err != nil {
 				return "", err
 			}
@@ -121,12 +121,13 @@ func getInstitutionName(domainName string) (string, error) {
 			return string(b), nil
 		}
 	}
+
 	return "", errors.New("Name of school not found")
 }
 
-//splitDomainName splits the domain name at the dots and returns a string array
-//of the split parts.
-//For example: uonbi.ac.ke ==> [uonbi ac ke]
+// splitDomainName splits the domain name at the dots and returns a string array
+// of the split parts.
+// For example: uonbi.ac.ke ==> [uonbi ac ke]
 func splitDomainName(domainName string) []string {
 	return strings.Split(domainName, ".")
 }

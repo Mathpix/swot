@@ -3,14 +3,13 @@ package swot
 import (
 	"bufio"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
 
-func Test_IsAcademic(t *testing.T) {
+func TestIsAcademic(t *testing.T) {
 	tests := map[string]bool{
 		"lreilly@stanford.edu":          true,
 		"LREILLY@STANFORD.EDU":          true,
@@ -69,7 +68,7 @@ func Test_IsAcademic(t *testing.T) {
 
 }
 
-func Test_GetSchoolName(t *testing.T) {
+func TestGetSchoolName(t *testing.T) {
 	tests := map[string]string{
 		"lreilly@cs.strath.ac.uk":        "University of Strathclyde",
 		"lreilly@fadi.at":                "BRG Fadingerstraße Linz, Austria",
@@ -83,14 +82,13 @@ func Test_GetSchoolName(t *testing.T) {
 	for key, want := range tests {
 		got := GetSchoolName(key)
 		if strings.Compare(got, want) != 0 {
-			fmt.Println(strings.Compare(got, want))
 			t.Fatalf("%s, want:%s, got:%s\n", key, want, got)
 		}
 	}
 }
 
-func Test_domainFiles(t *testing.T) {
-	err := filepath.Walk("domains", walkFunc)
+func TestDomainFiles(t *testing.T) {
+	err := br.Walk(".", walkFunc)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,12 +96,12 @@ func Test_domainFiles(t *testing.T) {
 
 func walkFunc(path string, info os.FileInfo, err error) error {
 	if !info.IsDir() {
-		//Should contain only text files
+		// Should contain only text files
 		if filepath.Ext(info.Name()) != ".txt" {
 			return errors.New(info.Name() + " should have a .txt extension.")
 		}
 
-		//Each file should contain only a single line of text.
+		// Each file should contain only a single line of text.
 		f, err := os.Open(path)
 		if err != nil {
 			return err
