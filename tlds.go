@@ -1,7 +1,6 @@
 package swot
 
-//academicTLDs are top level domains guarenteed to be academic institutions.
-var academicTLDs = []string{
+var tlds = []string{
 	"ac.ae",
 	"ac.at",
 	"ac.bd",

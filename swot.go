@@ -1,3 +1,5 @@
+// Package swot finds academic domains and emails
+// go:generate broccoli -src domains -o domains
 package swot
 
 import (
@@ -10,104 +12,69 @@ import (
 	valid "github.com/asaskevich/govalidator"
 )
 
-// IsAcademic returns true if the email address/URL belongs to an academic institution.
-func IsAcademic(emailOrURL string) bool {
-	domainName, err := getDomainName(emailOrURL)
-	if err != nil {
-		return false
-	}
+var (
+	// ErrDomainNotFound happens when a domain is not found
+	ErrDomainNotFound = errors.New("Domain name not found")
 
-	if isBlacklisted(domainName) {
-		return false
-	} else if isAcademicTLD(domainName) {
-		return true
-	}
+	// ErrSchoolNotFound happens whan a school name is not found
+	ErrSchoolNotFound = errors.New("School name not found")
+)
 
-	_, err = getInstitutionName(domainName)
-	return err == nil
+func isBlacklisted(domain string) bool {
+	for _, blacklisted := range blacklist {
+		if strings.HasSuffix(domain, blacklisted) {
+			return true
+		}
+	}
+	return false
 }
 
-func getDomainName(emailOrURL string) (string, error) {
-	var domainName string
+func isAcademicTLD(domain string) bool {
+	for _, tld := range tlds {
+		if strings.HasSuffix(domain, tld) {
+			return true
+		}
+	}
+	return false
+}
 
-	emailOrURL = strings.ToLower(strings.TrimSpace(emailOrURL))
-
-	if valid.IsEmail(emailOrURL) {
-		return strings.Split(emailOrURL, "@")[1], nil
-	} else if valid.IsURL(emailOrURL) {
-		if valid.IsRequestURL(emailOrURL) {
-			url, err := url.Parse(emailOrURL)
+func parseDomain(address string) (string, error) {
+	address = strings.ToLower(strings.TrimSpace(address))
+	switch {
+	case valid.IsEmail(address):
+		return strings.Split(address, "@")[1], nil
+	case valid.IsURL(address):
+		if valid.IsRequestURL(address) {
+			url, err := url.Parse(address)
 			if err != nil {
 				return "", err
 			}
-
-			domainName = url.Host
-			domainName = strings.Split(domainName, ":")[0]
-		} else {
-			domainName = emailOrURL
+			return strings.Split(url.Host, ":")[0], nil
 		}
 
-		domainName = strings.TrimPrefix(domainName, "www")
-
-		return domainName, nil
+		return address, nil
 	}
-
-	return "", errors.New("Domain name not found.")
+	return "", ErrDomainNotFound
 }
 
-func isBlacklisted(domainName string) bool {
-	for _, dn := range blacklist {
-		if strings.HasSuffix(domainName, dn) {
-			return true
-		}
-	}
-	return false
-}
-
-// isAcademicTLD returns true if the domainName is a top level academic domain
-// or false otherwise.
-func isAcademicTLD(domainName string) bool {
-	for _, tld := range academicTLDs {
-		if strings.HasSuffix(domainName, tld) {
-			return true
-		}
-	}
-	return false
-}
-
-// GetSchoolName returns the name of the academic institution
-// or an empty string if the name of the institution is not found.
-func GetSchoolName(emailOrURL string) string {
-	domainName, err := getDomainName(emailOrURL)
-	if err != nil {
-		return ""
-	}
-
-	s, err := getInstitutionName(domainName)
-	if err != nil {
-		return ""
-	}
-
-	return strings.TrimSpace(s)
-}
-
-// fileExits returns true if the file exists or false otherwise.
-func fileExits(path string) bool {
+func fileExists(path string) bool {
 	if _, err := br.Stat(path); err == nil {
 		return true
 	}
 	return false
 }
 
-func getInstitutionName(domainName string) (string, error) {
+func getInstitutionName(address string) (string, error) {
+	domain, err := parseDomain(address)
+	if err != nil {
+		return "", err
+	}
 
-	domainParts := splitDomainName(domainName)
-
+	domainParts := splitdomain(domain)
 	path := "domains"
-
 	for i := len(domainParts) - 1; i >= 0; i-- {
 		path = filepath.Join(path, domainParts[i])
-		if fileExits(path + ".txt") {
+		if fileExists(path + ".txt") {
 			f, err := br.Open(path + ".txt")
 			if err != nil {
 				return "", err
@@ -122,12 +89,38 @@ func getInstitutionName(domainName string) (string, error) {
 		}
 	}
 
-	return "", errors.New("Name of school not found")
+	return "", ErrSchoolNotFound
 }
 
-// splitDomainName splits the domain name at the dots and returns a string array
-// of the split parts.
-// For example: uonbi.ac.ke ==> [uonbi ac ke]
-func splitDomainName(domainName string) []string {
-	return strings.Split(domainName, ".")
+func splitdomain(domain string) []string {
+	return strings.Split(domain, ".")
+}
+
+// IsAcademic returns true if the email address or URL belongs
+// to an academic institution.
+func IsAcademic(address string) bool {
+	domain, err := parseDomain(address)
+	if err != nil {
+		return false
+	}
+
+	if isBlacklisted(domain) {
+		return false
+	} else if isAcademicTLD(domain) {
+		return true
+	}
+
+	_, err = getInstitutionName(domain)
+	return err == nil
+}
+
+// GetSchoolName returns the name of the academic institution or
+// an empty string if the name of the institution is not found.
+func GetSchoolName(address string) string {
+	s, err := getInstitutionName(address)
+	if err != nil {
+		return ""
+	}
+
+	return strings.TrimSpace(s)
 }
