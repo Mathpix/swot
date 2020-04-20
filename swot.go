@@ -1,5 +1,5 @@
 // Package swot finds academic domains and emails
-// go:generate broccoli -src domains -o domains
+//go:generate broccoli -src domains -o domains
 package swot
 
 import (
