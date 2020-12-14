@@ -1,9 +1,10 @@
-module github.com/Mathpix/swot
+module github.com/mathpix/swot
 
-go 1.13
+go 1.14
 
 require (
-	github.com/montanaflynn/broccoli v1.0.2 // indirect
-	github.com/montanaflynn/broccoli/fs v0.0.0-20200417133515-96f8feb4daae
-	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496
+	github.com/andybalholm/brotli v1.0.1 // indirect
+	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
+	github.com/montanaflynn/broccoli v1.0.4 // indirect
+	github.com/montanaflynn/broccoli/fs v0.0.0-20201214095104-273317009109
 )
