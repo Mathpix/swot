@@ -1,4 +1,4 @@
-module github.com/mathpix/swot
+module github.com/Mathpix/swot
 
 go 1.14
 
