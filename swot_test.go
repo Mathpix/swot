@@ -52,7 +52,6 @@ func TestIsAcademic(t *testing.T) {
 		{"foo.si.edu", false},
 		{"america.edu", false},
 		{"folger.edu", false},
-		{"foo@fit.ac.cy", true},
 		{"foo@stud.fit.ac.cy", true},
 		{"foo@stud.frederick.ac.cy", true},
 		{"foo@fit.ac.cy", true},
